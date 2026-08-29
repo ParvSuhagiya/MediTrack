@@ -48,6 +48,7 @@ export default function MarkTaken() {
         },
         body: JSON.stringify({
           medicineId: id,
+          status: 'taken',
           photo: `data:image/jpeg;base64,${photo.base64}`,
         }),
       });

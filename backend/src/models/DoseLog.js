@@ -13,11 +13,15 @@ const doseLogSchema = new mongoose.Schema({
   },
   photo: {
     type: String,
-    required: true,
   },
   takenAt: {
     type: Date,
     default: Date.now,
+  },
+  status: {
+    type: String,
+    enum: ['taken', 'missed', 'skipped'],
+    required: true,
   },
 });
 
