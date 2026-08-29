@@ -15,7 +15,8 @@ export default function Home() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Welcome, {user?.name}</Text>
-      <Text>{user?.email}</Text>
+      <Text style={styles.subtitle}>{user?.email}</Text>
+
       <TouchableOpacity style={styles.button} onPress={handleLogout}>
         <Text style={styles.buttonText}>Logout</Text>
       </TouchableOpacity>
@@ -24,8 +25,30 @@ export default function Home() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  title: { fontSize: 22, marginBottom: 10 },
-  button: { backgroundColor: '#dc3545', padding: 15, borderRadius: 5, marginTop: 20 },
-  buttonText: { color: '#fff' },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 4,
+    marginBottom: 24,
+  },
+  button: {
+    backgroundColor: '#dc2626',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });
