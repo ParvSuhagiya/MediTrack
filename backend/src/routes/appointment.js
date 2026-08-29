@@ -7,7 +7,7 @@ const router = express.Router();
 // POST /api/appointments
 router.post('/', auth, async (req, res) => {
   try {
-    const { doctor, clinic, date, time, notes } = req.body;
+    const { doctor, clinic, date, time, notes, address, latitude, longitude } = req.body;
 
     if (!doctor || !clinic || !date || !time) {
       return res.status(400).json({ message: 'Please fill all required fields' });
@@ -20,6 +20,9 @@ router.post('/', auth, async (req, res) => {
       date,
       time,
       notes: notes || '',
+      address: address || '',
+      latitude,
+      longitude,
     });
 
     res.status(201).json(appointment);

@@ -1,6 +1,7 @@
 import { useState, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as Location from 'expo-location';
 import { AuthContext } from '../context/AuthContext';
 import { API_URL } from '../constants/api';
 
@@ -10,10 +11,44 @@ export default function AddAppointment() {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [notes, setNotes] = useState('');
+  const [address, setAddress] = useState('');
+  const [latitude, setLatitude] = useState(null);
+  const [longitude, setLongitude] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   const { token } = useContext(AuthContext);
   const router = useRouter();
+
+  const handleGetLocation = async () => {
+    setLocationLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Location access is required to use this feature');
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      setLatitude(location.coords.latitude);
+      setLongitude(location.coords.longitude);
+
+      const geocode = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude
+      });
+
+      if (geocode && geocode.length > 0) {
+        const place = geocode[0];
+        const fullAddress = `${place.name || place.street || ''} ${place.city || ''}, ${place.region || ''}`.trim();
+        setAddress(fullAddress);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Could not get current location');
+    } finally {
+      setLocationLoading(false);
+    }
+  };
 
   const handleAdd = async () => {
     if (!doctor || !clinic || !date || !time) {
@@ -29,7 +64,7 @@ export default function AddAppointment() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ doctor, clinic, date, time, notes }),
+        body: JSON.stringify({ doctor, clinic, date, time, notes, address, latitude, longitude }),
       });
 
       const data = await response.json();
@@ -48,7 +83,7 @@ export default function AddAppointment() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Add Appointment</Text>
 
       <TextInput
@@ -60,7 +95,7 @@ export default function AddAppointment() {
 
       <TextInput
         style={styles.input}
-        placeholder="Clinic"
+        placeholder="Clinic Name"
         value={clinic}
         onChangeText={setClinic}
       />
@@ -86,16 +121,28 @@ export default function AddAppointment() {
         onChangeText={setNotes}
       />
 
+      <View style={styles.locationContainer}>
+        <TextInput
+          style={[styles.input, { flex: 1, marginBottom: 0 }]}
+          placeholder="Clinic Address (optional)"
+          value={address}
+          onChangeText={setAddress}
+        />
+        <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation} disabled={locationLoading}>
+          <Text style={styles.locationButtonText}>{locationLoading ? 'Locating...' : 'Use Current'}</Text>
+        </TouchableOpacity>
+      </View>
+
       <TouchableOpacity style={styles.button} onPress={handleAdd} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Adding...' : 'Add Appointment'}</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
   },
@@ -111,6 +158,23 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+    alignItems: 'stretch',
+  },
+  locationButton: {
+    backgroundColor: '#059669',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  locationButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
   },
   button: {
     backgroundColor: '#2563eb',

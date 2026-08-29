@@ -1,5 +1,5 @@
 import { useState, useContext, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
 import { API_URL } from '../../constants/api';
@@ -60,23 +60,37 @@ export default function Appointments() {
     }
   };
 
+  const handleOpenMap = (lat, lng) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Error', 'Could not open map');
+    });
+  };
+
   const renderItem = ({ item }) => (
     <View style={styles.card}>
       <Text style={[styles.name, item.completed && styles.completedText]}>{item.doctor}</Text>
       <Text style={styles.detail}>{item.clinic} · {item.date} · {item.time}</Text>
+      {item.address ? <Text style={styles.address}>📍 {item.address}</Text> : null}
       {item.notes ? <Text style={styles.notes}>Notes: {item.notes}</Text> : null}
 
       <View style={styles.row}>
+        {item.latitude && item.longitude ? (
+          <TouchableOpacity style={styles.mapButton} onPress={() => handleOpenMap(item.latitude, item.longitude)}>
+            <Text style={styles.buttonText}>Map</Text>
+          </TouchableOpacity>
+        ) : null}
+
         <TouchableOpacity
           style={item.completed ? styles.completedButton : styles.completeButton}
           onPress={() => handleToggleComplete(item)}
         >
-          <Text style={styles.buttonText}>{item.completed ? 'Completed' : 'Mark Completed'}</Text>
+          <Text style={styles.buttonText}>{item.completed ? 'Completed' : 'Complete'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.editButton}
-          onPress={() => router.push({ pathname: '/edit-appointment', params: { id: item._id, doctor: item.doctor, clinic: item.clinic, date: item.date, time: item.time, notes: item.notes } })}
+          onPress={() => router.push({ pathname: '/edit-appointment', params: { id: item._id, doctor: item.doctor, clinic: item.clinic, date: item.date, time: item.time, notes: item.notes, address: item.address, latitude: item.latitude, longitude: item.longitude } })}
         >
           <Text style={styles.buttonText}>Edit</Text>
         </TouchableOpacity>
@@ -142,6 +156,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 6,
   },
+  address: {
+    color: '#333',
+    fontSize: 13,
+    marginBottom: 4,
+  },
   notes: {
     color: '#444',
     fontStyle: 'italic',
@@ -152,6 +171,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     marginTop: 4,
+  },
+  mapButton: {
+    backgroundColor: '#0ea5e9',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 6,
   },
   completeButton: {
     backgroundColor: '#16a34a',

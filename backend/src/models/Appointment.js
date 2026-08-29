@@ -30,6 +30,16 @@ const appointmentSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  address: {
+    type: String,
+    default: '',
+  },
+  latitude: {
+    type: Number,
+  },
+  longitude: {
+    type: Number,
+  },
 });
 
 module.exports = mongoose.model('Appointment', appointmentSchema);
