@@ -1,12 +1,10 @@
 const jwt = require('jsonwebtoken');
 
-// This checks for a valid JWT token in the request header
-// If valid, it attaches the user's id to req.userId so routes can use it
 const auth = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: 'No token, access denied' });
+  if (!authHeader) {
+    return res.status(401).json({ message: 'No token provided' });
   }
 
   const token = authHeader.split(' ')[1];
@@ -16,7 +14,7 @@ const auth = (req, res, next) => {
     req.userId = decoded.id;
     next();
   } catch (err) {
-    return res.status(401).json({ message: 'Invalid or expired token' });
+    res.status(401).json({ message: 'Invalid token' });
   }
 };
 
