@@ -7,10 +7,14 @@ const router = express.Router();
 // POST /api/doselogs
 router.post('/', auth, async (req, res) => {
   try {
-    const { medicineId, status, photo } = req.body;
+    let { medicineId, status, photo } = req.body;
 
-    if (!medicineId || !status) {
-      return res.status(400).json({ message: 'Medicine and status are required' });
+    if (!medicineId) {
+      return res.status(400).json({ message: 'Medicine is required' });
+    }
+
+    if (!status) {
+      status = 'taken';
     }
 
     if (status === 'taken' && !photo) {
@@ -33,32 +37,28 @@ router.post('/', auth, async (req, res) => {
 // GET /api/doselogs
 router.get('/', auth, async (req, res) => {
   try {
-    const doseLogs = await DoseLog.find({ user: req.userId })
+    const { medicine, date } = req.query;
+    let query = { user: req.userId };
+
+    if (medicine) {
+      query.medicine = medicine;
+    }
+
+    if (date) {
+      const startDate = new Date(date);
+      startDate.setHours(0, 0, 0, 0);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + 1);
+
+      query.takenAt = {
+        $gte: startDate,
+        $lt: endDate,
+      };
+    }
+
+    const doseLogs = await DoseLog.find(query)
       .populate('medicine', 'name dosage')
-      .sort({ loggedAt: -1 });
-
-    res.json(doseLogs);
-  } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
-  }
-});
-
-// GET /api/doselogs/today
-router.get('/today', auth, async (req, res) => {
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const doseLogs = await DoseLog.find({
-      user: req.userId,
-      loggedAt: {
-        $gte: today,
-        $lt: tomorrow,
-      },
-    }).populate('medicine', 'name dosage');
+      .sort({ takenAt: -1 });
 
     res.json(doseLogs);
   } catch (err) {

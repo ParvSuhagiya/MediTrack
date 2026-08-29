@@ -14,9 +14,11 @@ export default function Schedule() {
   const fetchSchedule = async () => {
     setLoading(true);
     try {
+      const today = new Date().toISOString().split('T')[0];
+      
       const [medicinesRes, logsRes] = await Promise.all([
         fetch(`${API_URL}/medicines`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_URL}/doselogs/today`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API_URL}/doselogs?date=${today}`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
 
       const medicines = await medicinesRes.json();
@@ -41,7 +43,7 @@ export default function Schedule() {
 
         if (hour < 12) {
           morning.push(medWithLog);
-        } else if (hour < 18) {
+        } else if (hour < 17) {
           afternoon.push(medWithLog);
         } else {
           night.push(medWithLog);
