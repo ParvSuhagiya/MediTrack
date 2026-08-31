@@ -1,7 +1,8 @@
 import { useState, useContext, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Linking } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Linking, ActivityIndicator } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
+import { ToastContext } from '../../context/ToastContext';
 import { API_URL } from '../../constants/api';
 
 export default function Appointments() {
@@ -9,6 +10,7 @@ export default function Appointments() {
   const [loading, setLoading] = useState(true);
 
   const { token } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const router = useRouter();
 
   const fetchAppointments = async () => {
@@ -32,16 +34,30 @@ export default function Appointments() {
     }, [])
   );
 
-  const handleDelete = async (id) => {
-    try {
-      await fetch(`${API_URL}/appointments/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      fetchAppointments();
-    } catch (err) {
-      Alert.alert('Error', 'Could not delete appointment');
-    }
+  const handleDelete = (id) => {
+    Alert.alert(
+      'Delete Appointment',
+      'Are you sure you want to delete this appointment?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              await fetch(`${API_URL}/appointments/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              showToast('Appointment deleted');
+              fetchAppointments();
+            } catch (err) {
+              Alert.alert('Error', 'Could not delete appointment');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleToggleComplete = async (appointment) => {
@@ -54,6 +70,7 @@ export default function Appointments() {
         },
         body: JSON.stringify({ completed: !appointment.completed }),
       });
+      showToast(!appointment.completed ? 'Appointment marked complete' : 'Appointment marked incomplete');
       fetchAppointments();
     } catch (err) {
       Alert.alert('Error', 'Could not update appointment');
@@ -114,7 +131,13 @@ export default function Appointments() {
         renderItem={renderItem}
         refreshing={loading}
         onRefresh={fetchAppointments}
-        ListEmptyComponent={<Text style={styles.empty}>No appointments added yet</Text>}
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator size="large" color="#2563eb" style={{ marginTop: 40 }} />
+          ) : (
+            <Text style={styles.empty}>No appointments added yet</Text>
+          )
+        }
       />
     </View>
   );

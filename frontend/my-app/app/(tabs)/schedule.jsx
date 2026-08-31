@@ -1,7 +1,8 @@
 import { useState, useContext, useCallback } from 'react';
-import { View, Text, SectionList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, SectionList, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
+import { ToastContext } from '../../context/ToastContext';
 import { API_URL } from '../../constants/api';
 
 export default function Schedule() {
@@ -9,6 +10,7 @@ export default function Schedule() {
   const [loading, setLoading] = useState(true);
 
   const { token } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const router = useRouter();
 
   const fetchSchedule = async () => {
@@ -84,6 +86,7 @@ export default function Schedule() {
         Alert.alert('Error', 'Could not save log');
         return;
       }
+      showToast(`Dose marked as ${status}`);
       fetchSchedule();
     } catch (err) {
       Alert.alert('Error', 'Could not connect to server');
@@ -133,7 +136,13 @@ export default function Schedule() {
         )}
         refreshing={loading}
         onRefresh={fetchSchedule}
-        ListEmptyComponent={<Text style={styles.empty}>No schedule for today</Text>}
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator size="large" color="#2563eb" style={{ marginTop: 40 }} />
+          ) : (
+            <Text style={styles.empty}>No schedule for today</Text>
+          )
+        }
       />
     </View>
   );

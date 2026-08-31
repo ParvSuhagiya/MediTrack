@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
 import { ThemeContext } from '../../context/ThemeContext';
@@ -10,8 +10,21 @@ export default function Home() {
   const router = useRouter();
 
   const handleLogout = () => {
-    logout();
-    router.replace('/login');
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          style: 'destructive', 
+          onPress: () => {
+            logout();
+            router.replace('/login');
+          }
+        }
+      ]
+    );
   };
 
   const isDark = theme === 'dark';

@@ -1,7 +1,8 @@
 import { useState, useContext, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
+import { ToastContext } from '../../context/ToastContext';
 import { API_URL } from '../../constants/api';
 
 export default function Medicines() {
@@ -9,6 +10,7 @@ export default function Medicines() {
   const [loading, setLoading] = useState(true);
 
   const { token } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const router = useRouter();
 
   const fetchMedicines = async () => {
@@ -32,16 +34,30 @@ export default function Medicines() {
     }, [])
   );
 
-  const handleDelete = async (id) => {
-    try {
-      await fetch(`${API_URL}/medicines/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      fetchMedicines();
-    } catch (err) {
-      Alert.alert('Error', 'Could not delete medicine');
-    }
+  const handleDelete = (id) => {
+    Alert.alert(
+      'Delete Medicine',
+      'Are you sure you want to delete this medicine?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              await fetch(`${API_URL}/medicines/${id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              showToast('Medicine deleted');
+              fetchMedicines();
+            } catch (err) {
+              Alert.alert('Error', 'Could not delete medicine');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const renderItem = ({ item }) => (
@@ -83,7 +99,13 @@ export default function Medicines() {
         renderItem={renderItem}
         refreshing={loading}
         onRefresh={fetchMedicines}
-        ListEmptyComponent={<Text style={styles.empty}>No medicines added yet</Text>}
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator size="large" color="#2563eb" style={{ marginTop: 40 }} />
+          ) : (
+            <Text style={styles.empty}>No medicines added yet</Text>
+          )
+        }
       />
     </View>
   );

@@ -8,13 +8,32 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const { login } = useContext(AuthContext);
   const router = useRouter();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please enter email and password');
+    let valid = true;
+    setEmailError('');
+    setPasswordError('');
+
+    if (!email) {
+      setEmailError('Email is required');
+      valid = false;
+    } else if (!email.includes('@') || !email.includes('.')) {
+      setEmailError('Invalid email format');
+      valid = false;
+    }
+
+    if (!password) {
+      setPasswordError('Password is required');
+      valid = false;
+    }
+
+    if (!valid) {
+      Alert.alert('Error', 'Please fix the errors below');
       return;
     }
 
@@ -47,21 +66,23 @@ export default function Login() {
       <Text style={styles.title}>Login</Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, emailError ? styles.inputError : null]}
         placeholder="Email"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => { setEmail(text); setEmailError(''); }}
         autoCapitalize="none"
         keyboardType="email-address"
       />
+      {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, passwordError ? styles.inputError : null]}
         placeholder="Password"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(text) => { setPassword(text); setPasswordError(''); }}
         secureTextEntry
       />
+      {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
       <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Logging in...' : 'Login'}</Text>
@@ -92,6 +113,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
+  },
+  inputError: {
+    borderColor: '#dc2626',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 12,
+    marginBottom: 12,
+    marginTop: -8,
   },
   button: {
     backgroundColor: '#2563eb',

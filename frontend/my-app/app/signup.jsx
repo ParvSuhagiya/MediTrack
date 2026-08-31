@@ -8,12 +8,41 @@ export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const router = useRouter();
 
   const handleSignup = async () => {
-    if (!name || !email || !password) {
-      Alert.alert('Error', 'Please fill all fields');
+    let valid = true;
+    setNameError('');
+    setEmailError('');
+    setPasswordError('');
+
+    if (!name) {
+      setNameError('Name is required');
+      valid = false;
+    }
+
+    if (!email) {
+      setEmailError('Email is required');
+      valid = false;
+    } else if (!email.includes('@') || !email.includes('.')) {
+      setEmailError('Invalid email format');
+      valid = false;
+    }
+
+    if (!password) {
+      setPasswordError('Password is required');
+      valid = false;
+    } else if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters');
+      valid = false;
+    }
+
+    if (!valid) {
+      Alert.alert('Error', 'Please fix the errors below');
       return;
     }
 
@@ -46,28 +75,31 @@ export default function Signup() {
       <Text style={styles.title}>Sign Up</Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, nameError ? styles.inputError : null]}
         placeholder="Name"
         value={name}
-        onChangeText={setName}
+        onChangeText={(text) => { setName(text); setNameError(''); }}
       />
+      {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, emailError ? styles.inputError : null]}
         placeholder="Email"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => { setEmail(text); setEmailError(''); }}
         autoCapitalize="none"
         keyboardType="email-address"
       />
+      {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, passwordError ? styles.inputError : null]}
         placeholder="Password"
         value={password}
-        onChangeText={setPassword}
+        onChangeText={(text) => { setPassword(text); setPasswordError(''); }}
         secureTextEntry
       />
+      {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
 
       <TouchableOpacity style={styles.button} onPress={handleSignup} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Signing up...' : 'Sign Up'}</Text>
@@ -98,6 +130,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
+  },
+  inputError: {
+    borderColor: '#dc2626',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 12,
+    marginBottom: 12,
+    marginTop: -8,
   },
   button: {
     backgroundColor: '#2563eb',

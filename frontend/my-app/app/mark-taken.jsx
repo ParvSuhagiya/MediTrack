@@ -3,23 +3,27 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, Alert } from 'react-na
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { AuthContext } from '../context/AuthContext';
+import { ToastContext } from '../context/ToastContext';
 import { API_URL } from '../constants/api';
 
 export default function MarkTaken() {
   const { id, name } = useLocalSearchParams();
   const [photo, setPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   const { token } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const router = useRouter();
 
   const openCamera = async () => {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
 
     if (!permission.granted) {
-      Alert.alert('Permission needed', 'Camera access is required to take a photo');
+      setPermissionDenied(true);
       return;
     }
+    setPermissionDenied(false);
 
     const result = await ImagePicker.launchCameraAsync({
       base64: true,
@@ -60,7 +64,7 @@ export default function MarkTaken() {
         return;
       }
 
-      Alert.alert('Success', 'Dose marked as taken');
+      showToast('Dose marked as taken');
       router.back();
     } catch (err) {
       Alert.alert('Error', 'Could not connect to server');
@@ -85,6 +89,13 @@ export default function MarkTaken() {
             <Text style={styles.buttonText}>{loading ? 'Saving...' : 'Confirm & Save'}</Text>
           </TouchableOpacity>
         </>
+      ) : permissionDenied ? (
+        <View style={styles.permissionContainer}>
+          <Text style={styles.permissionText}>Camera access is required to take a photo.</Text>
+          <TouchableOpacity style={styles.buttonOutline} onPress={openCamera}>
+            <Text style={styles.buttonOutlineText}>Retry Permission</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
         <TouchableOpacity style={styles.button} onPress={openCamera}>
           <Text style={styles.buttonText}>Take Photo</Text>
@@ -139,5 +150,18 @@ const styles = StyleSheet.create({
     color: '#2563eb',
     textAlign: 'center',
     fontWeight: 'bold',
+  },
+  permissionContainer: {
+    alignItems: 'center',
+    width: '100%',
+    padding: 20,
+    backgroundColor: '#fee2e2',
+    borderRadius: 8,
+    marginTop: 12,
+  },
+  permissionText: {
+    color: '#dc2626',
+    marginBottom: 12,
+    textAlign: 'center',
   },
 });

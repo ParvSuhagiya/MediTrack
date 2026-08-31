@@ -2,6 +2,7 @@ import { useContext, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Switch, ScrollView } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 import { ThemeContext } from '../../context/ThemeContext';
+import { ToastContext } from '../../context/ToastContext';
 import { API_URL } from '../../constants/api';
 
 export default function Profile() {
@@ -15,9 +16,35 @@ export default function Profile() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
+  const [nameError, setNameError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [currentPasswordError, setCurrentPasswordError] = useState('');
+  const [newPasswordError, setNewPasswordError] = useState('');
+  const [confirmNewPasswordError, setConfirmNewPasswordError] = useState('');
+
+  const { showToast } = useContext(ToastContext);
+
   const isDark = theme === 'dark';
 
   const handleUpdateProfile = async () => {
+    let valid = true;
+    setNameError('');
+    setEmailError('');
+
+    if (!name) { setNameError('Name is required'); valid = false; }
+    if (!email) { 
+      setEmailError('Email is required'); 
+      valid = false; 
+    } else if (!email.includes('@') || !email.includes('.')) {
+      setEmailError('Invalid email format');
+      valid = false;
+    }
+
+    if (!valid) {
+      Alert.alert('Error', 'Please fix the errors below');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_URL}/users/profile`, {
         method: 'PUT',
@@ -30,7 +57,7 @@ export default function Profile() {
       const data = await response.json();
       if (response.ok) {
         updateUser(data);
-        Alert.alert('Success', 'Profile updated successfully');
+        showToast('Profile updated successfully');
       } else {
         Alert.alert('Error', data.message || 'Failed to update profile');
       }
@@ -40,8 +67,28 @@ export default function Profile() {
   };
 
   const handleUpdatePassword = async () => {
+    let valid = true;
+    setCurrentPasswordError('');
+    setNewPasswordError('');
+    setConfirmNewPasswordError('');
+
+    if (!currentPassword) { setCurrentPasswordError('Current password is required'); valid = false; }
+    
+    if (!newPassword) { 
+      setNewPasswordError('New password is required'); 
+      valid = false; 
+    } else if (newPassword.length < 6) {
+      setNewPasswordError('Password must be at least 6 characters');
+      valid = false;
+    }
+
     if (newPassword !== confirmNewPassword) {
-      Alert.alert('Error', 'New passwords do not match');
+      setConfirmNewPasswordError('Passwords do not match');
+      valid = false;
+    }
+
+    if (!valid) {
+      Alert.alert('Error', 'Please fix the errors below');
       return;
     }
     
@@ -59,7 +106,7 @@ export default function Profile() {
         setCurrentPassword('');
         setNewPassword('');
         setConfirmNewPassword('');
-        Alert.alert('Success', 'Password updated successfully');
+        showToast('Password updated successfully');
       } else {
         Alert.alert('Error', data.message || 'Failed to update password');
       }
@@ -79,12 +126,12 @@ export default function Profile() {
     }
   };
 
-  const inputStyle = [
+  const getInputStyle = (hasError) => [
     styles.input,
     {
       backgroundColor: isDark ? '#333' : '#fff',
       color: isDark ? '#fff' : '#000',
-      borderColor: isDark ? '#555' : '#ccc',
+      borderColor: hasError ? '#dc2626' : (isDark ? '#555' : '#ccc'),
     }
   ];
 
@@ -92,21 +139,24 @@ export default function Profile() {
     <ScrollView style={dynamicStyles.container}>
       <Text style={[styles.sectionTitle, dynamicStyles.text]}>Edit Profile</Text>
       <TextInput
-        style={inputStyle}
+        style={getInputStyle(nameError)}
         placeholder="Name"
         placeholderTextColor={isDark ? '#aaa' : '#666'}
         value={name}
-        onChangeText={setName}
+        onChangeText={(text) => { setName(text); setNameError(''); }}
       />
+      {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
+      
       <TextInput
-        style={inputStyle}
+        style={getInputStyle(emailError)}
         placeholder="Email"
         placeholderTextColor={isDark ? '#aaa' : '#666'}
         value={email}
-        onChangeText={setEmail}
+        onChangeText={(text) => { setEmail(text); setEmailError(''); }}
         autoCapitalize="none"
         keyboardType="email-address"
       />
+      {emailError ? <Text style={styles.errorText}>{emailError}</Text> : null}
       <TouchableOpacity style={styles.button} onPress={handleUpdateProfile}>
         <Text style={styles.buttonText}>Save Profile</Text>
       </TouchableOpacity>
@@ -115,29 +165,34 @@ export default function Profile() {
 
       <Text style={[styles.sectionTitle, dynamicStyles.text]}>Change Password</Text>
       <TextInput
-        style={inputStyle}
+        style={getInputStyle(currentPasswordError)}
         placeholder="Current Password"
         placeholderTextColor={isDark ? '#aaa' : '#666'}
         secureTextEntry
         value={currentPassword}
-        onChangeText={setCurrentPassword}
+        onChangeText={(text) => { setCurrentPassword(text); setCurrentPasswordError(''); }}
       />
+      {currentPasswordError ? <Text style={styles.errorText}>{currentPasswordError}</Text> : null}
+
       <TextInput
-        style={inputStyle}
+        style={getInputStyle(newPasswordError)}
         placeholder="New Password"
         placeholderTextColor={isDark ? '#aaa' : '#666'}
         secureTextEntry
         value={newPassword}
-        onChangeText={setNewPassword}
+        onChangeText={(text) => { setNewPassword(text); setNewPasswordError(''); }}
       />
+      {newPasswordError ? <Text style={styles.errorText}>{newPasswordError}</Text> : null}
+
       <TextInput
-        style={inputStyle}
+        style={getInputStyle(confirmNewPasswordError)}
         placeholder="Confirm New Password"
         placeholderTextColor={isDark ? '#aaa' : '#666'}
         secureTextEntry
         value={confirmNewPassword}
-        onChangeText={setConfirmNewPassword}
+        onChangeText={(text) => { setConfirmNewPassword(text); setConfirmNewPasswordError(''); }}
       />
+      {confirmNewPasswordError ? <Text style={styles.errorText}>{confirmNewPasswordError}</Text> : null}
       <TouchableOpacity style={styles.button} onPress={handleUpdatePassword}>
         <Text style={styles.buttonText}>Update Password</Text>
       </TouchableOpacity>
@@ -164,6 +219,12 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 12,
+    marginBottom: 12,
+    marginTop: -12,
   },
   button: {
     backgroundColor: '#0ea5e9',

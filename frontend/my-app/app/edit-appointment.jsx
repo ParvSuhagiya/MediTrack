@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView 
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
 import { AuthContext } from '../context/AuthContext';
+import { ToastContext } from '../context/ToastContext';
 import { API_URL } from '../constants/api';
 
 export default function EditAppointment() {
@@ -18,8 +19,14 @@ export default function EditAppointment() {
   const [longitude, setLongitude] = useState(params.longitude ? parseFloat(params.longitude) : null);
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [doctorError, setDoctorError] = useState('');
+  const [clinicError, setClinicError] = useState('');
+  const [dateError, setDateError] = useState('');
+  const [timeError, setTimeError] = useState('');
+  const [permissionDenied, setPermissionDenied] = useState(false);
 
   const { token } = useContext(AuthContext);
+  const { showToast } = useContext(ToastContext);
   const router = useRouter();
 
   const handleGetLocation = async () => {
@@ -27,9 +34,10 @@ export default function EditAppointment() {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Location access is required to use this feature');
+        setPermissionDenied(true);
         return;
       }
+      setPermissionDenied(false);
 
       const location = await Location.getCurrentPositionAsync({});
       setLatitude(location.coords.latitude);
@@ -53,7 +61,18 @@ export default function EditAppointment() {
   };
 
   const handleUpdate = async () => {
-    if (!doctor || !clinic || !date || !time) {
+    let valid = true;
+    setDoctorError('');
+    setClinicError('');
+    setDateError('');
+    setTimeError('');
+
+    if (!doctor) { setDoctorError('Doctor is required'); valid = false; }
+    if (!clinic) { setClinicError('Clinic is required'); valid = false; }
+    if (!date) { setDateError('Date is required'); valid = false; }
+    if (!time) { setTimeError('Time is required'); valid = false; }
+
+    if (!valid) {
       Alert.alert('Error', 'Please fill all required fields');
       return;
     }
@@ -76,6 +95,7 @@ export default function EditAppointment() {
         return;
       }
 
+      showToast('Appointment updated');
       router.back();
     } catch (err) {
       Alert.alert('Error', 'Could not connect to server');
@@ -89,32 +109,36 @@ export default function EditAppointment() {
       <Text style={styles.title}>Edit Appointment</Text>
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, doctorError ? styles.inputError : null]}
         placeholder="Doctor Name"
         value={doctor}
-        onChangeText={setDoctor}
+        onChangeText={(text) => { setDoctor(text); setDoctorError(''); }}
       />
+      {doctorError ? <Text style={styles.errorText}>{doctorError}</Text> : null}
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, clinicError ? styles.inputError : null]}
         placeholder="Clinic Name"
         value={clinic}
-        onChangeText={setClinic}
+        onChangeText={(text) => { setClinic(text); setClinicError(''); }}
       />
+      {clinicError ? <Text style={styles.errorText}>{clinicError}</Text> : null}
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, dateError ? styles.inputError : null]}
         placeholder="Date (e.g. 2024-12-01)"
         value={date}
-        onChangeText={setDate}
+        onChangeText={(text) => { setDate(text); setDateError(''); }}
       />
+      {dateError ? <Text style={styles.errorText}>{dateError}</Text> : null}
 
       <TextInput
-        style={styles.input}
+        style={[styles.input, timeError ? styles.inputError : null]}
         placeholder="Time (e.g. 10:00 AM)"
         value={time}
-        onChangeText={setTime}
+        onChangeText={(text) => { setTime(text); setTimeError(''); }}
       />
+      {timeError ? <Text style={styles.errorText}>{timeError}</Text> : null}
 
       <TextInput
         style={styles.input}
@@ -134,6 +158,12 @@ export default function EditAppointment() {
           <Text style={styles.locationButtonText}>{locationLoading ? 'Locating...' : 'Use Current'}</Text>
         </TouchableOpacity>
       </View>
+      {permissionDenied ? (
+        <View style={styles.permissionContainer}>
+          <Text style={styles.permissionText}>Location access denied</Text>
+          <TouchableOpacity onPress={handleGetLocation}><Text style={styles.retryText}>Retry</Text></TouchableOpacity>
+        </View>
+      ) : null}
 
       <TouchableOpacity style={styles.button} onPress={handleUpdate} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Updating...' : 'Update Appointment'}</Text>
@@ -161,6 +191,15 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
   },
+  inputError: {
+    borderColor: '#dc2626',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 12,
+    marginBottom: 12,
+    marginTop: -8,
+  },
   locationContainer: {
     flexDirection: 'row',
     gap: 8,
@@ -187,6 +226,21 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     textAlign: 'center',
+    fontWeight: 'bold',
+  },
+  permissionContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  permissionText: {
+    color: '#dc2626',
+    fontSize: 12,
+  },
+  retryText: {
+    color: '#2563eb',
+    fontSize: 12,
     fontWeight: 'bold',
   },
 });

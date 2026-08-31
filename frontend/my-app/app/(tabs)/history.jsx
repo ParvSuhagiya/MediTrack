@@ -1,5 +1,5 @@
 import { useState, useContext, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Image, Modal, ScrollView, TextInput } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Image, Modal, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
 import { API_URL } from '../../constants/api';
@@ -130,7 +130,13 @@ export default function History() {
         renderItem={renderItem}
         refreshing={loading}
         onRefresh={fetchData}
-        ListEmptyComponent={<Text style={styles.empty}>No dose logs found</Text>}
+        ListEmptyComponent={
+          loading ? (
+            <ActivityIndicator size="large" color="#2563eb" style={{ marginTop: 40 }} />
+          ) : (
+            <Text style={styles.empty}>No dose logs found</Text>
+          )
+        }
       />
 
       <Modal visible={!!selectedPhoto} transparent={true} animationType="fade">
