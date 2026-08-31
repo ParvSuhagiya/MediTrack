@@ -1,13 +1,17 @@
 import { useContext, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Switch, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
 import { ThemeContext } from '../../context/ThemeContext';
 import { ToastContext } from '../../context/ToastContext';
 import { API_URL } from '../../constants/api';
+import { Colors } from '../../constants/colors';
 
 export default function Profile() {
-  const { user, token, updateUser } = useContext(AuthContext);
+  const { user, token, updateUser, logout } = useContext(AuthContext);
   const { theme, toggleTheme } = useContext(ThemeContext);
+  const colors = Colors[theme] || Colors.light;
+  const router = useRouter();
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
@@ -115,23 +119,42 @@ export default function Profile() {
     }
   };
 
+
   const dynamicStyles = {
     container: {
       flex: 1,
-      backgroundColor: isDark ? '#121212' : '#f5f5f5',
+      backgroundColor: colors.background,
       padding: 24,
     },
     text: {
-      color: isDark ? '#fff' : '#000',
+      color: colors.text,
     }
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          style: 'destructive', 
+          onPress: () => {
+            logout();
+            router.replace('/login');
+          }
+        }
+      ]
+    );
   };
 
   const getInputStyle = (hasError) => [
     styles.input,
     {
-      backgroundColor: isDark ? '#333' : '#fff',
-      color: isDark ? '#fff' : '#000',
-      borderColor: hasError ? '#dc2626' : (isDark ? '#555' : '#ccc'),
+      backgroundColor: colors.surface,
+      color: colors.text,
+      borderColor: hasError ? colors.danger : colors.border,
     }
   ];
 
@@ -141,7 +164,7 @@ export default function Profile() {
       <TextInput
         style={getInputStyle(nameError)}
         placeholder="Name"
-        placeholderTextColor={isDark ? '#aaa' : '#666'}
+        placeholderTextColor={colors.textSecondary}
         value={name}
         onChangeText={(text) => { setName(text); setNameError(''); }}
       />
@@ -150,7 +173,7 @@ export default function Profile() {
       <TextInput
         style={getInputStyle(emailError)}
         placeholder="Email"
-        placeholderTextColor={isDark ? '#aaa' : '#666'}
+        placeholderTextColor={colors.textSecondary}
         value={email}
         onChangeText={(text) => { setEmail(text); setEmailError(''); }}
         autoCapitalize="none"
@@ -167,7 +190,7 @@ export default function Profile() {
       <TextInput
         style={getInputStyle(currentPasswordError)}
         placeholder="Current Password"
-        placeholderTextColor={isDark ? '#aaa' : '#666'}
+        placeholderTextColor={colors.textSecondary}
         secureTextEntry
         value={currentPassword}
         onChangeText={(text) => { setCurrentPassword(text); setCurrentPasswordError(''); }}
@@ -177,7 +200,7 @@ export default function Profile() {
       <TextInput
         style={getInputStyle(newPasswordError)}
         placeholder="New Password"
-        placeholderTextColor={isDark ? '#aaa' : '#666'}
+        placeholderTextColor={colors.textSecondary}
         secureTextEntry
         value={newPassword}
         onChangeText={(text) => { setNewPassword(text); setNewPasswordError(''); }}
@@ -187,7 +210,7 @@ export default function Profile() {
       <TextInput
         style={getInputStyle(confirmNewPasswordError)}
         placeholder="Confirm New Password"
-        placeholderTextColor={isDark ? '#aaa' : '#666'}
+        placeholderTextColor={colors.textSecondary}
         secureTextEntry
         value={confirmNewPassword}
         onChangeText={(text) => { setConfirmNewPassword(text); setConfirmNewPasswordError(''); }}
@@ -203,6 +226,10 @@ export default function Profile() {
         <Text style={[styles.themeText, dynamicStyles.text]}>Dark Mode</Text>
         <Switch value={isDark} onValueChange={toggleTheme} />
       </View>
+
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Text style={styles.logoutButtonText}>Logout</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -227,21 +254,21 @@ const styles = StyleSheet.create({
     marginTop: -12,
   },
   button: {
-    backgroundColor: '#0ea5e9',
-    paddingVertical: 12,
+    backgroundColor: Colors.light.primary,
+    paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
     marginBottom: 16,
   },
   buttonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
     fontSize: 16,
   },
   divider: {
     height: 1,
-    backgroundColor: '#ccc',
-    marginVertical: 16,
+    backgroundColor: Colors.light.border,
+    marginVertical: 24,
   },
   themeRow: {
     flexDirection: 'row',
@@ -250,6 +277,21 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   themeText: {
-    fontSize: 18,
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  logoutButton: {
+    borderWidth: 1,
+    borderColor: Colors.light.danger,
+    backgroundColor: 'transparent',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  logoutButtonText: {
+    color: Colors.light.danger,
+    fontWeight: '600',
+    fontSize: 16,
   }
 });

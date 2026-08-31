@@ -3,7 +3,9 @@ import { View, Text, SectionList, TouchableOpacity, StyleSheet, Alert, ActivityI
 import { useRouter, useFocusEffect } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
 import { ToastContext } from '../../context/ToastContext';
+import { ThemeContext } from '../../context/ThemeContext';
 import { API_URL } from '../../constants/api';
+import { Colors } from '../../constants/colors';
 
 export default function Schedule() {
   const [sections, setSections] = useState([]);
@@ -11,7 +13,9 @@ export default function Schedule() {
 
   const { token } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
+  const { theme } = useContext(ThemeContext);
   const router = useRouter();
+  const colors = Colors[theme] || Colors.light;
 
   const fetchSchedule = async () => {
     setLoading(true);
@@ -94,30 +98,30 @@ export default function Schedule() {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.detail}>{item.dosage} · {item.time}</Text>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <Text style={[styles.name, { color: colors.text }]}>{item.name}</Text>
+      <Text style={[styles.detail, { color: colors.textSecondary }]}>{item.dosage} · {item.time}</Text>
 
       {item.log ? (
-        <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>
+        <View style={[styles.statusBadge, { backgroundColor: colors.border }]}>
+          <Text style={[styles.statusText, { color: colors.text }]}>
             {item.log.status.charAt(0).toUpperCase() + item.log.status.slice(1)}
           </Text>
         </View>
       ) : (
         <View style={styles.row}>
           <TouchableOpacity
-            style={styles.takenButton}
+            style={[styles.takenButton, { backgroundColor: colors.success }]}
             onPress={() => router.push({ pathname: '/mark-taken', params: { id: item._id, name: item.name } })}
           >
             <Text style={styles.buttonText}>Taken</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.skipButton} onPress={() => markLog(item._id, 'skipped')}>
+          <TouchableOpacity style={[styles.skipButton, { backgroundColor: colors.textSecondary }]} onPress={() => markLog(item._id, 'skipped')}>
             <Text style={styles.buttonText}>Skip</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.missButton} onPress={() => markLog(item._id, 'missed')}>
+          <TouchableOpacity style={[styles.missButton, { backgroundColor: colors.danger }]} onPress={() => markLog(item._id, 'missed')}>
             <Text style={styles.buttonText}>Miss</Text>
           </TouchableOpacity>
         </View>
@@ -126,19 +130,19 @@ export default function Schedule() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <SectionList
         sections={sections}
         keyExtractor={(item) => item._id}
         renderItem={renderItem}
         renderSectionHeader={({ section: { title } }) => (
-          <Text style={styles.sectionHeader}>{title}</Text>
+          <Text style={[styles.sectionHeader, { color: colors.text, backgroundColor: colors.border }]}>{title}</Text>
         )}
         refreshing={loading}
         onRefresh={fetchSchedule}
         ListEmptyComponent={
           loading ? (
-            <ActivityIndicator size="large" color="#2563eb" style={{ marginTop: 40 }} />
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
           ) : (
             <Text style={styles.empty}>No schedule for today</Text>
           )
@@ -157,19 +161,17 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 16,
-    marginBottom: 8,
-    backgroundColor: '#f2f2f2',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    marginBottom: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    overflow: 'hidden',
   },
   card: {
     borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
-    backgroundColor: '#fff',
   },
   name: {
     fontSize: 16,
@@ -185,42 +187,38 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   takenButton: {
-    backgroundColor: '#16a34a',
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 6,
+    borderRadius: 8,
     flex: 1,
   },
   skipButton: {
-    backgroundColor: '#6b7280',
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 6,
+    borderRadius: 8,
     flex: 1,
   },
   missButton: {
-    backgroundColor: '#dc2626',
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 6,
+    borderRadius: 8,
     flex: 1,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 12,
-    fontWeight: 'bold',
+    fontSize: 14,
+    fontWeight: '600',
     textAlign: 'center',
   },
   statusBadge: {
-    backgroundColor: '#e5e7eb',
     alignSelf: 'flex-start',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
   },
   statusText: {
-    fontWeight: 'bold',
-    color: '#374151',
+    fontWeight: '600',
+    fontSize: 14,
   },
   empty: {
     textAlign: 'center',

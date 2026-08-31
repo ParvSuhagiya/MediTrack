@@ -3,7 +3,9 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, ActivityIndi
 import { useRouter, useFocusEffect } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
 import { ToastContext } from '../../context/ToastContext';
+import { ThemeContext } from '../../context/ThemeContext';
 import { API_URL } from '../../constants/api';
+import { Colors } from '../../constants/colors';
 
 export default function Medicines() {
   const [medicines, setMedicines] = useState([]);
@@ -11,7 +13,9 @@ export default function Medicines() {
 
   const { token } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
+  const { theme } = useContext(ThemeContext);
   const router = useRouter();
+  const colors = Colors[theme] || Colors.light;
 
   const fetchMedicines = async () => {
     setLoading(true);
@@ -61,26 +65,26 @@ export default function Medicines() {
   };
 
   const renderItem = ({ item }) => (
-    <View style={styles.card}>
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.detail}>{item.dosage} · {item.frequency} · {item.time}</Text>
+    <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <Text style={[styles.name, { color: colors.text }]}>{item.name}</Text>
+      <Text style={[styles.detail, { color: colors.textSecondary }]}>{item.dosage} · {item.frequency} · {item.time}</Text>
 
       <View style={styles.row}>
         <TouchableOpacity
-          style={styles.takenButton}
+          style={[styles.takenButton, { backgroundColor: colors.success }]}
           onPress={() => router.push({ pathname: '/mark-taken', params: { id: item._id, name: item.name } })}
         >
           <Text style={styles.buttonText}>Mark as Taken</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.editButton}
+          style={[styles.editButton, { backgroundColor: colors.primary }]}
           onPress={() => router.push({ pathname: '/edit-medicine', params: item })}
         >
           <Text style={styles.buttonText}>Edit</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.deleteButton} onPress={() => handleDelete(item._id)}>
+        <TouchableOpacity style={[styles.deleteButton, { backgroundColor: colors.danger }]} onPress={() => handleDelete(item._id)}>
           <Text style={styles.buttonText}>Delete</Text>
         </TouchableOpacity>
       </View>
@@ -88,8 +92,8 @@ export default function Medicines() {
   );
 
   return (
-    <View style={styles.container}>
-      <TouchableOpacity style={styles.addButton} onPress={() => router.push('/add-medicine')}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <TouchableOpacity style={[styles.addButton, { backgroundColor: colors.primary }]} onPress={() => router.push('/add-medicine')}>
         <Text style={styles.addButtonText}>+ Add Medicine</Text>
       </TouchableOpacity>
 
@@ -101,7 +105,7 @@ export default function Medicines() {
         onRefresh={fetchMedicines}
         ListEmptyComponent={
           loading ? (
-            <ActivityIndicator size="large" color="#2563eb" style={{ marginTop: 40 }} />
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
           ) : (
             <Text style={styles.empty}>No medicines added yet</Text>
           )
@@ -117,58 +121,60 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   addButton: {
-    backgroundColor: '#2563eb',
-    padding: 12,
+    padding: 16,
     borderRadius: 8,
     marginBottom: 16,
   },
   addButtonText: {
     color: '#fff',
     textAlign: 'center',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 16,
   },
   card: {
     borderWidth: 1,
-    borderColor: '#eee',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
   },
   name: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   detail: {
-    color: '#666',
     marginTop: 4,
-    marginBottom: 10,
+    marginBottom: 12,
+    fontSize: 14,
   },
   row: {
     flexDirection: 'row',
     gap: 8,
   },
   takenButton: {
-    backgroundColor: '#16a34a',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    flex: 2,
+    alignItems: 'center',
   },
   editButton: {
-    backgroundColor: '#2563eb',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
   },
   deleteButton: {
-    backgroundColor: '#dc2626',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 6,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    flex: 1,
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   empty: {
     textAlign: 'center',

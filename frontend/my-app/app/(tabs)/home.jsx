@@ -1,42 +1,18 @@
 import { useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 import { ThemeContext } from '../../context/ThemeContext';
+import { Colors } from '../../constants/colors';
 
 export default function Home() {
-  const { user, logout } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const { theme } = useContext(ThemeContext);
-  const router = useRouter();
-
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Logout', 
-          style: 'destructive', 
-          onPress: () => {
-            logout();
-            router.replace('/login');
-          }
-        }
-      ]
-    );
-  };
-
-  const isDark = theme === 'dark';
+  const colors = Colors[theme] || Colors.light;
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#121212' : '#f5f5f5' }]}>
-      <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>Welcome, {user?.name}</Text>
-      <Text style={[styles.subtitle, { color: isDark ? '#aaa' : '#666' }]}>{user?.email}</Text>
-
-      <TouchableOpacity style={styles.button} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Logout</Text>
-      </TouchableOpacity>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Welcome, {user?.name}</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{user?.email}</Text>
     </View>
   );
 }
@@ -49,22 +25,13 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   title: {
-    fontSize: 22,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     marginTop: 4,
     marginBottom: 24,
-  },
-  button: {
-    backgroundColor: '#dc2626',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-  },
-  buttonText: {
-    color: '#fff',
-    fontWeight: 'bold',
   },
 });

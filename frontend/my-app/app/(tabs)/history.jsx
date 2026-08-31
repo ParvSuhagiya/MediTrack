@@ -2,7 +2,9 @@ import { useState, useContext, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert, Image, Modal, ScrollView, TextInput, ActivityIndicator } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
+import { ThemeContext } from '../../context/ThemeContext';
 import { API_URL } from '../../constants/api';
+import { Colors } from '../../constants/colors';
 
 export default function History() {
   const [logs, setLogs] = useState([]);
@@ -17,25 +19,31 @@ export default function History() {
   const [selectedPhoto, setSelectedPhoto] = useState(null);
 
   const { token } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
+  const colors = Colors[theme] || Colors.light;
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const [logsRes, medsRes] = await Promise.all([
-        fetch(`${API_URL}/doselogs`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_URL}/medicines`, { headers: { Authorization: `Bearer ${token}` } })
-      ]);
-      const logsData = await logsRes.json();
-      const medsData = await medsRes.json();
-      
-      setLogs(logsData);
-      setMedicines(medsData);
-    } catch (err) {
-      Alert.alert('Error', 'Could not load history');
-    } finally {
-      setLoading(false);
+const fetchData = async () => {
+  setLoading(true);
+  try {
+    const [logsRes, medsRes] = await Promise.all([
+      fetch(`${API_URL}/doselogs`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API_URL}/medicines`, { headers: { Authorization: `Bearer ${token}` } })
+    ]);
+    const logsData = await logsRes.json();
+    const medsData = await medsRes.json();
+
+    setLogs(Array.isArray(logsData) ? logsData : []);
+    setMedicines(Array.isArray(medsData) ? medsData : []);
+
+    if (!logsRes.ok || !medsRes.ok) {
+      Alert.alert('Error', logsData.message || medsData.message || 'Could not load history');
     }
-  };
+  } catch (err) {
+    Alert.alert('Error', 'Could not load history');
+  } finally {
+    setLoading(false);
+  }
+};
 
   useFocusEffect(
     useCallback(() => {
@@ -70,14 +78,14 @@ export default function History() {
     const timeStr = dateObj.toLocaleTimeString();
 
     return (
-      <View style={styles.card}>
+      <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <View style={styles.cardHeader}>
           <View>
-            <Text style={styles.name}>{item.medicine?.name}</Text>
-            <Text style={styles.detail}>{dateStr} at {timeStr}</Text>
+            <Text style={[styles.name, { color: colors.text }]}>{item.medicine?.name}</Text>
+            <Text style={[styles.detail, { color: colors.textSecondary }]}>{dateStr} at {timeStr}</Text>
           </View>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>
+          <View style={[styles.statusBadge, { backgroundColor: colors.border }]}>
+            <Text style={[styles.statusText, { color: colors.text }]}>
               {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
             </Text>
           </View>
@@ -92,33 +100,34 @@ export default function History() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.statsContainer}>
-        <Text style={styles.statsText}>Adherence Rate: {adherence}%</Text>
-        <Text style={styles.statsSubtext}>{takenLogs} / {totalLogs} doses taken</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.statsContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <Text style={[styles.statsText, { color: colors.primary }]}>Adherence Rate: {adherence}%</Text>
+        <Text style={[styles.statsSubtext, { color: colors.textSecondary }]}>{takenLogs} / {totalLogs} doses taken</Text>
       </View>
 
       <View style={styles.filtersContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.medFilters}>
           <TouchableOpacity
-            style={[styles.filterChip, selectedMed === '' && styles.filterChipActive]}
+            style={[styles.filterChip, { backgroundColor: colors.border }, selectedMed === '' && { backgroundColor: colors.primary }]}
             onPress={() => setSelectedMed('')}
           >
-            <Text style={[styles.filterChipText, selectedMed === '' && styles.filterChipTextActive]}>All</Text>
+            <Text style={[styles.filterChipText, { color: colors.text }, selectedMed === '' && { color: '#fff' }]}>All</Text>
           </TouchableOpacity>
           {medicines.map(med => (
             <TouchableOpacity
               key={med._id}
-              style={[styles.filterChip, selectedMed === med._id && styles.filterChipActive]}
+              style={[styles.filterChip, { backgroundColor: colors.border }, selectedMed === med._id && { backgroundColor: colors.primary }]}
               onPress={() => setSelectedMed(med._id)}
             >
-              <Text style={[styles.filterChipText, selectedMed === med._id && styles.filterChipTextActive]}>{med.name}</Text>
+              <Text style={[styles.filterChipText, { color: colors.text }, selectedMed === med._id && { color: '#fff' }]}>{med.name}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
         <TextInput
-          style={styles.dateInput}
+          style={[styles.dateInput, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
           placeholder="Filter by Date (YYYY-MM-DD)"
+          placeholderTextColor={colors.textSecondary}
           value={selectedDate}
           onChangeText={setSelectedDate}
         />
@@ -132,7 +141,7 @@ export default function History() {
         onRefresh={fetchData}
         ListEmptyComponent={
           loading ? (
-            <ActivityIndicator size="large" color="#2563eb" style={{ marginTop: 40 }} />
+            <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
           ) : (
             <Text style={styles.empty}>No dose logs found</Text>
           )
@@ -157,21 +166,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#f9fafb',
   },
   statsContainer: {
-    backgroundColor: '#fff',
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#eee',
     alignItems: 'center',
     marginBottom: 16,
   },
   statsText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2563eb',
+    fontSize: 28,
+    fontWeight: '800',
   },
   statsSubtext: {
     color: '#666',
@@ -185,35 +190,24 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   filterChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#e5e7eb',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
     marginRight: 8,
-  },
-  filterChipActive: {
-    backgroundColor: '#2563eb',
   },
   filterChipText: {
     fontSize: 14,
-    color: '#374151',
-  },
-  filterChipTextActive: {
-    color: '#fff',
+    fontWeight: '600',
   },
   dateInput: {
     borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    backgroundColor: '#fff',
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#eee',
     borderRadius: 8,
     padding: 12,
+  },
+  card: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
   },
   cardHeader: {
@@ -222,23 +216,21 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   name: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   detail: {
-    color: '#666',
     marginTop: 4,
+    fontSize: 14,
   },
   statusBadge: {
-    backgroundColor: '#f3f4f6',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
   },
   statusText: {
-    fontWeight: 'bold',
-    color: '#374151',
-    fontSize: 12,
+    fontWeight: '600',
+    fontSize: 14,
   },
   thumbnail: {
     width: '100%',
