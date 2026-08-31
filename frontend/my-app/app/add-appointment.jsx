@@ -4,7 +4,9 @@ import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
+import { ThemeContext } from '../context/ThemeContext';
 import { API_URL } from '../constants/api';
+import { Colors } from '../constants/colors';
 
 export default function AddAppointment() {
   const [doctor, setDoctor] = useState('');
@@ -25,7 +27,9 @@ export default function AddAppointment() {
 
   const { token } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
+  const { theme } = useContext(ThemeContext);
   const router = useRouter();
+  const colors = Colors[theme] || Colors.light;
 
   const handleGetLocation = async () => {
     setLocationLoading(true);
@@ -102,68 +106,90 @@ export default function AddAppointment() {
     }
   };
 
+  const getInputStyle = (hasError) => [
+    styles.input,
+    {
+      backgroundColor: colors.surface,
+      color: colors.text,
+      borderColor: hasError ? colors.danger : colors.border,
+    }
+  ];
+
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Add Appointment</Text>
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Add Appointment</Text>
 
       <TextInput
-        style={[styles.input, doctorError ? styles.inputError : null]}
+        style={getInputStyle(doctorError)}
         placeholder="Doctor Name"
+        placeholderTextColor={colors.textSecondary}
         value={doctor}
         onChangeText={(text) => { setDoctor(text); setDoctorError(''); }}
       />
-      {doctorError ? <Text style={styles.errorText}>{doctorError}</Text> : null}
+      {doctorError ? <Text style={[styles.errorText, { color: colors.danger }]}>{doctorError}</Text> : null}
 
       <TextInput
-        style={[styles.input, clinicError ? styles.inputError : null]}
+        style={getInputStyle(clinicError)}
         placeholder="Clinic Name"
+        placeholderTextColor={colors.textSecondary}
         value={clinic}
         onChangeText={(text) => { setClinic(text); setClinicError(''); }}
       />
-      {clinicError ? <Text style={styles.errorText}>{clinicError}</Text> : null}
+      {clinicError ? <Text style={[styles.errorText, { color: colors.danger }]}>{clinicError}</Text> : null}
 
       <TextInput
-        style={[styles.input, dateError ? styles.inputError : null]}
+        style={getInputStyle(dateError)}
         placeholder="Date (e.g. 2024-12-01)"
+        placeholderTextColor={colors.textSecondary}
         value={date}
         onChangeText={(text) => { setDate(text); setDateError(''); }}
       />
-      {dateError ? <Text style={styles.errorText}>{dateError}</Text> : null}
+      {dateError ? <Text style={[styles.errorText, { color: colors.danger }]}>{dateError}</Text> : null}
 
       <TextInput
-        style={[styles.input, timeError ? styles.inputError : null]}
+        style={getInputStyle(timeError)}
         placeholder="Time (e.g. 10:00 AM)"
+        placeholderTextColor={colors.textSecondary}
         value={time}
         onChangeText={(text) => { setTime(text); setTimeError(''); }}
       />
-      {timeError ? <Text style={styles.errorText}>{timeError}</Text> : null}
+      {timeError ? <Text style={[styles.errorText, { color: colors.danger }]}>{timeError}</Text> : null}
 
       <TextInput
-        style={styles.input}
+        style={getInputStyle(false)}
         placeholder="Notes (optional)"
+        placeholderTextColor={colors.textSecondary}
         value={notes}
         onChangeText={setNotes}
       />
 
       <View style={styles.locationContainer}>
         <TextInput
-          style={[styles.input, { flex: 1, marginBottom: 0 }]}
+          style={[getInputStyle(false), { flex: 1, marginBottom: 0 }]}
           placeholder="Clinic Address (optional)"
+          placeholderTextColor={colors.textSecondary}
           value={address}
           onChangeText={setAddress}
         />
-        <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation} disabled={locationLoading}>
+        <TouchableOpacity
+          style={[styles.locationButton, { backgroundColor: colors.success }]}
+          onPress={handleGetLocation}
+          disabled={locationLoading}
+        >
           <Text style={styles.locationButtonText}>{locationLoading ? 'Locating...' : 'Use Current'}</Text>
         </TouchableOpacity>
       </View>
+
       {permissionDenied ? (
         <View style={styles.permissionContainer}>
-          <Text style={styles.permissionText}>Location access denied</Text>
-          <TouchableOpacity onPress={handleGetLocation}><Text style={styles.retryText}>Retry</Text></TouchableOpacity>
+          <Text style={[styles.permissionText, { color: colors.danger }]}>Location access denied</Text>
+          <TouchableOpacity onPress={handleGetLocation}>
+            <Text style={[styles.retryText, { color: colors.primary }]}>Retry</Text>
+          </TouchableOpacity>
         </View>
       ) : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleAdd} disabled={loading}>
+      <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleAdd} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Adding...' : 'Add Appointment'}</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -177,23 +203,18 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 24,
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 32,
     textAlign: 'center',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 8,
-    padding: 12,
+    padding: 14,
     marginBottom: 12,
   },
-  inputError: {
-    borderColor: '#dc2626',
-  },
   errorText: {
-    color: '#dc2626',
     fontSize: 12,
     marginBottom: 12,
     marginTop: -8,
@@ -205,26 +226,25 @@ const styles = StyleSheet.create({
     alignItems: 'stretch',
   },
   locationButton: {
-    backgroundColor: '#059669',
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     borderRadius: 8,
   },
   locationButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
+    fontWeight: '600',
+    fontSize: 13,
   },
   button: {
-    backgroundColor: '#2563eb',
-    padding: 14,
+    padding: 16,
     borderRadius: 8,
-    marginTop: 8,
+    marginTop: 12,
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 16,
   },
   permissionContainer: {
     flexDirection: 'row',
@@ -233,12 +253,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   permissionText: {
-    color: '#dc2626',
     fontSize: 12,
   },
   retryText: {
-    color: '#2563eb',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
 });

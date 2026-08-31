@@ -1,9 +1,11 @@
 import { useState, useContext } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AuthContext } from '../context/AuthContext';
 import { ToastContext } from '../context/ToastContext';
+import { ThemeContext } from '../context/ThemeContext';
 import { API_URL } from '../constants/api';
+import { Colors } from '../constants/colors';
 
 export default function AddMedicine() {
   const [name, setName] = useState('');
@@ -18,7 +20,9 @@ export default function AddMedicine() {
 
   const { token } = useContext(AuthContext);
   const { showToast } = useContext(ToastContext);
+  const { theme } = useContext(ThemeContext);
   const router = useRouter();
+  const colors = Colors[theme] || Colors.light;
 
   const handleAdd = async () => {
     let valid = true;
@@ -64,86 +68,94 @@ export default function AddMedicine() {
     }
   };
 
+  const getInputStyle = (hasError) => [
+    styles.input,
+    {
+      backgroundColor: colors.surface,
+      color: colors.text,
+      borderColor: hasError ? colors.danger : colors.border,
+    }
+  ];
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Add Medicine</Text>
+    <ScrollView contentContainerStyle={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.title, { color: colors.text }]}>Add Medicine</Text>
 
       <TextInput
-        style={[styles.input, nameError ? styles.inputError : null]}
+        style={getInputStyle(nameError)}
         placeholder="Name"
+        placeholderTextColor={colors.textSecondary}
         value={name}
         onChangeText={(text) => { setName(text); setNameError(''); }}
       />
-      {nameError ? <Text style={styles.errorText}>{nameError}</Text> : null}
+      {nameError ? <Text style={[styles.errorText, { color: colors.danger }]}>{nameError}</Text> : null}
 
       <TextInput
-        style={[styles.input, dosageError ? styles.inputError : null]}
+        style={getInputStyle(dosageError)}
         placeholder="Dosage (e.g. 500mg)"
+        placeholderTextColor={colors.textSecondary}
         value={dosage}
         onChangeText={(text) => { setDosage(text); setDosageError(''); }}
       />
-      {dosageError ? <Text style={styles.errorText}>{dosageError}</Text> : null}
+      {dosageError ? <Text style={[styles.errorText, { color: colors.danger }]}>{dosageError}</Text> : null}
 
       <TextInput
-        style={[styles.input, frequencyError ? styles.inputError : null]}
+        style={getInputStyle(frequencyError)}
         placeholder="Frequency (e.g. Twice a day)"
+        placeholderTextColor={colors.textSecondary}
         value={frequency}
         onChangeText={(text) => { setFrequency(text); setFrequencyError(''); }}
       />
-      {frequencyError ? <Text style={styles.errorText}>{frequencyError}</Text> : null}
+      {frequencyError ? <Text style={[styles.errorText, { color: colors.danger }]}>{frequencyError}</Text> : null}
 
       <TextInput
-        style={[styles.input, timeError ? styles.inputError : null]}
+        style={getInputStyle(timeError)}
         placeholder="Time (e.g. 9:00 AM)"
+        placeholderTextColor={colors.textSecondary}
         value={time}
         onChangeText={(text) => { setTime(text); setTimeError(''); }}
       />
-      {timeError ? <Text style={styles.errorText}>{timeError}</Text> : null}
+      {timeError ? <Text style={[styles.errorText, { color: colors.danger }]}>{timeError}</Text> : null}
 
-      <TouchableOpacity style={styles.button} onPress={handleAdd} disabled={loading}>
+      <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleAdd} disabled={loading}>
         <Text style={styles.buttonText}>{loading ? 'Adding...' : 'Add Medicine'}</Text>
       </TouchableOpacity>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 24,
   },
   title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 24,
+    fontSize: 28,
+    fontWeight: '800',
+    marginBottom: 32,
     textAlign: 'center',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ccc',
     borderRadius: 8,
-    padding: 12,
+    padding: 14,
     marginBottom: 12,
   },
-  inputError: {
-    borderColor: '#dc2626',
-  },
   errorText: {
-    color: '#dc2626',
     fontSize: 12,
     marginBottom: 12,
     marginTop: -8,
   },
   button: {
-    backgroundColor: '#2563eb',
-    padding: 14,
+    padding: 16,
     borderRadius: 8,
-    marginTop: 8,
+    marginTop: 12,
+    alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
