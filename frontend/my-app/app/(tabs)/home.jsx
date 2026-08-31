@@ -2,9 +2,11 @@ import { useContext } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { AuthContext } from '../../context/AuthContext';
+import { ThemeContext } from '../../context/ThemeContext';
 
 export default function Home() {
   const { user, logout } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
   const router = useRouter();
 
   const handleLogout = () => {
@@ -12,10 +14,12 @@ export default function Home() {
     router.replace('/login');
   };
 
+  const isDark = theme === 'dark';
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome, {user?.name}</Text>
-      <Text style={styles.subtitle}>{user?.email}</Text>
+    <View style={[styles.container, { backgroundColor: isDark ? '#121212' : '#f5f5f5' }]}>
+      <Text style={[styles.title, { color: isDark ? '#fff' : '#000' }]}>Welcome, {user?.name}</Text>
+      <Text style={[styles.subtitle, { color: isDark ? '#aaa' : '#666' }]}>{user?.email}</Text>
 
       <TouchableOpacity style={styles.button} onPress={handleLogout}>
         <Text style={styles.buttonText}>Logout</Text>
@@ -37,7 +41,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
     marginTop: 4,
     marginBottom: 24,
   },
@@ -51,4 +54,4 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-});
+});

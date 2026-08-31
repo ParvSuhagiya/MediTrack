@@ -6,6 +6,7 @@ const authRoutes = require('./routes/auth');
 const medicineRoutes = require('./routes/medicine');
 const doseLogRoutes = require('./routes/doseLog');
 const appointmentRoutes = require('./routes/appointment');
+const userRoutes = require('./routes/user');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/medicines', medicineRoutes);
 app.use('/api/doselogs', doseLogRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/users', userRoutes);
 
 const PORT = process.env.PORT || 5000;
 
